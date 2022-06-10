@@ -1,0 +1,64 @@
+pipeline {
+    agent any
+    
+
+tools {
+    maven "maven3.8.5"
+} //tools is closed 
+
+
+
+
+options {
+  timestamps ()
+  buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')
+}
+
+triggers {
+  pollSCM '* * * * *'
+}
+
+
+// git hub programe
+    stages {
+        stage('checkoutgit') {
+            steps {
+                git branch: 'development', credentialsId: 'c48dbf1f-2c98-424c-84a8-9a0683948926', url: 'https://github.com/Ranjith2021/maven-web-application.git'
+            } // steps is closing 
+        } //stageing is closed 
+    // maven is integrated now
+    stage('mavenbuild') {
+        steps {
+            sh "mvn clean package"
+        } // steps is closed 
+    } // stage is closed 
+        
+    stage('sonar') {
+        steps {
+            sh "mvn sonar:sonar"
+        }
+    }
+    stage ('deployintomcat') {
+        steps {
+        sshagent(['6384a424-19a1-4c54-ba37-5b96b227955c']) {
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.110.176.204:/opt/apache-tomcat-9.0.63/webapps/" 
+    }
+    }
+    }
+    
+}
+}
+
+post {
+  always {
+    // One or more steps need to be included within each condition's block.
+  }
+  success {
+    // One or more steps need to be included within each condition's block.
+  }
+  failure {
+    // One or more steps need to be included within each condition's block.
+  }
+}
+
+
